@@ -2,6 +2,7 @@ import '@/index.css';
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
+import MainApp from "@/index.css";
 import ApperIcon from "@/components/ApperIcon";
 import Header from "@/components/organisms/Header";
 import CartDrawer from "@/components/organisms/CartDrawer";
@@ -558,76 +559,50 @@ const timeoutId = createSafeTimeout(() => {
               className="admin-progress-fill" 
               style={{ width: `${adminLoadProgress}%` }}
             />
-          </div>
-          <div className="admin-loading-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-loading-title">
-            <div className="admin-loading-modal">
-              <div className="admin-loading-spinner" aria-hidden="true" />
-              <p id="admin-loading-title" className="admin-loading-text" aria-live="polite">
-                {adminLoadProgress < 20 ? 'Initializing dashboard...' : 
-                 adminLoadProgress < 40 ? 'Checking browser compatibility...' :
-                 adminLoadProgress < 60 ? 'Loading admin content...' :
-                 adminLoadProgress < 80 ? 'Securing connection...' :
-                 adminLoadProgress < 100 ? 'Finalizing access...' : 'Complete!'}
-              </p>
-              
-{/* Browser compatibility info */}
-              <div className="text-xs text-gray-500 mt-2" aria-live="polite">
-                {BROWSER_INFO.name} {BROWSER_INFO.version} {BROWSER_INFO.mobile ? '(Mobile)' : '(Desktop)'}
-              </div>
-              
-              {adminError && (
-                <div className="admin-error-message" role="alert" aria-live="assertive">
-                  <div className="flex items-start space-x-2">
-                    <ApperIcon name="AlertTriangle" className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="text-red-600 text-sm font-medium">{adminError}</p>
-                      {retryCount > 0 && (
-                        <p className="text-gray-500 text-xs mt-1">
-                          Retry attempt {retryCount} of 3...
-                        </p>
-                      )}
-                      
-{/* Browser-specific help */}
-                      {BROWSER_INFO.name === 'Safari' && adminError.includes('timeout') && (
-                        <p className="text-blue-600 text-xs mt-1">
-                          Safari may take longer to load. Consider using Chrome or Firefox for better performance.
-                        </p>
-                      )}
-                      
-                      {BROWSER_INFO.mobile && adminError.includes('timeout') && (
-                        <p className="text-blue-600 text-xs mt-1">
-                          Mobile connections may be slower. Please ensure you have a stable internet connection.
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {showForceExit && (
-                <button
-                  onClick={handleForceExit}
-                  className="admin-force-exit-btn focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                  title="Emergency exit from loading state"
-                  aria-label="Force exit from admin loading state"
-                  tabIndex={0}
-                >
-                  <ApperIcon name="X" className="w-3 h-3 mr-1 inline" />
-                  Force Exit
-                </button>
-              )}
-              
-              {/* Accessibility instructions */}
-              <div className="sr-only" aria-live="polite">
-                Admin dashboard is loading. Progress: {adminLoadProgress}%. 
-                {adminError ? `Error occurred: ${adminError}` : ''}
-                {showForceExit ? 'Press Force Exit button if loading fails to complete.' : ''}
+</div>
+          
+          {/* Non-blocking admin loading indicator */}
+          {adminLoadProgress > 0 && adminLoadProgress < 100 && (
+            <div className="admin-mini-loader">
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-green-500 rounded-full animate-spin" />
+                <span className="text-sm text-gray-700">
+                  {adminLoadProgress < 20 ? 'Loading...' : 
+                   adminLoadProgress < 60 ? 'Preparing...' :
+                   adminLoadProgress < 100 ? 'Almost ready...' : 'Complete!'}
+                </span>
               </div>
             </div>
-          </div>
+          )}
+          
+          {/* Error notification without blocking overlay */}
+          {adminError && (
+            <div className="fixed top-4 right-4 bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg z-50 max-w-sm">
+              <div className="flex items-start space-x-2">
+                <ApperIcon name="AlertTriangle" className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-red-800 text-sm font-medium">{adminError}</p>
+                  {retryCount > 0 && (
+                    <p className="text-red-600 text-xs mt-1">
+                      Retry {retryCount}/3
+                    </p>
+                  )}
+                  {showForceExit && (
+                    <button
+                      onClick={handleForceExit}
+                      className="mt-2 text-xs bg-red-100 hover:bg-red-200 text-red-800 px-2 py-1 rounded transition-colors"
+                    >
+                      <ApperIcon name="X" className="w-3 h-3 inline mr-1" />
+                      Dismiss
+                    </button>
+                  )}
+                </div>
+</div>
+            </div>
+          )}
         </>
       )}
-        <Header />
+      <Header />
         
 <main>
           <Routes>
