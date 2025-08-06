@@ -357,6 +357,15 @@ body[data-admin-timeouts-cleared="true"] .overlay {
 .admin-verification-direct .mask {
   display: none !important;
 }
+
+/* Admin loading overlay with proper structure */
+.admin-loading-overlay-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
   z-index: 10002;
   display: flex;
   align-items: center;
