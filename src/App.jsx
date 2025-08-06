@@ -202,193 +202,223 @@ function AppContent() {
 
 const cleanupRef = useRef(false);
   
+// Clear all admin timeouts utility
+const clearAllAdminTimeouts = useCallback(() => {
+  // Clear all potential timeout locks
+  const timeoutIds = window.adminTimeoutIds || [];
+  timeoutIds.forEach(id => clearTimeout(id));
+  window.adminTimeoutIds = [];
+  document.body.setAttribute('data-admin-timeouts-cleared', 'true');
+}, []);
+
+// Optimized admin verification without masks
+const verifyAdminDirect = useCallback(async () => {
+  // Skip mask-generating verification steps
+  const token = localStorage.getItem('admin_token');
+  if (!token) return false;
+  
+  // Direct API call without intermediate loading states
+  try {
+    const response = await fetch('/api/admin/verify', {
+      method: 'HEAD',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}, []);
+
 const handleAdminAccess = useCallback(async () => {
-    // Prevent multiple simultaneous calls
-    if (isAdminLoading || cleanupRef.current || !isMountedRef.current) return;
+  // Prevent multiple simultaneous calls
+  if (isAdminLoading || cleanupRef.current || !isMountedRef.current) return;
+  
+  const startTime = performance.now();
+  cleanupRef.current = false;
+  
+  console.log('🔐 Starting optimized admin access...');
+  
+  // IMMEDIATELY remove any existing masks
+  document.querySelectorAll('.overlay, .mask, .backdrop, .modal-backdrop, [class*="overlay"], [class*="mask"]').forEach(el => {
+    el.remove();
+  });
+  
+  // Clear any timeout locks immediately
+  clearAllAdminTimeouts();
+  
+  // Show minimal loading indicator (not mask)
+  const loader = document.createElement('div');
+  loader.className = 'admin-mini-loader';
+  loader.innerHTML = '🔐 Securing admin access...';
+  document.body.appendChild(loader);
+  
+  setIsAdminLoading(true);
+  setAdminLoadProgress(0);
+  setAdminError(null);
+  setShowForceExit(false);
+  
+  // Track admin access attempt
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', 'admin_access_optimized_attempt', {
+      browser_name: BROWSER_INFO.name || 'unknown',
+      browser_version: BROWSER_INFO.version || 'unknown',
+      is_mobile: BROWSER_INFO.mobile || false,
+      timestamp: Date.now()
+    });
+  }
+  
+  // Reduced timeout for faster response
+  const timeoutDuration = BROWSER_INFO.mobile ? 3000 : 2000;
+  
+  const timeoutId = setTimeout(() => {
+    if (cleanupRef.current || !isMountedRef.current) return;
+    setShowForceExit(true);
+    setAdminError(`Loading timeout - Dashboard taking longer than expected (${timeoutDuration/1000}s timeout)`);
+    loader.innerHTML = `❌ Timeout reached <button onclick="window.location.reload()">Retry</button>`;
     
-    const startTime = performance.now();
-    cleanupRef.current = false;
-    setIsAdminLoading(true);
-    setAdminLoadProgress(0);
-    setAdminError(null);
-    setShowForceExit(false);
-    
-    // Track admin access attempt
+    // Track timeout events
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'admin_access_attempt', {
+      window.gtag('event', 'admin_load_timeout_optimized', {
+        timeout_duration: timeoutDuration,
         browser_name: BROWSER_INFO.name || 'unknown',
-        browser_version: BROWSER_INFO.version || 'unknown',
+        is_mobile: BROWSER_INFO.mobile || false
+      });
+    }
+  }, timeoutDuration);
+
+  try {
+    // Enhanced browser compatibility checks
+    if (!window.fetch) {
+      throw new Error('Browser does not support fetch API. Please update your browser.');
+    }
+    
+    if (!window.localStorage) {
+      throw new Error('Browser does not support localStorage. Please enable cookies and try again.');
+    }
+    
+    // Ensure no overlays are blocking navigation
+    document.body.classList.add('admin-accessing');
+    document.body.classList.add('content-layer');
+    
+    // Add accessibility attributes
+    document.body.setAttribute('aria-busy', 'true');
+    document.body.setAttribute('aria-live', 'polite');
+    
+    // Update loader
+    loader.innerHTML = '🔐 Checking permissions...';
+    if (!cleanupRef.current && isMountedRef.current) setAdminLoadProgress(25);
+    
+    // Direct permission check (no mask-generating steps)
+    const isAdmin = await verifyAdminDirect();
+    if (!isAdmin) {
+      loader.innerHTML = '🔐 Loading admin modules...';
+    }
+    
+    if (!cleanupRef.current && isMountedRef.current) setAdminLoadProgress(50);
+    
+    // Load admin modules with minimal delay
+    loader.innerHTML = '🔐 Initializing dashboard...';
+    await new Promise(resolve => setTimeout(resolve, BROWSER_INFO.mobile ? 200 : 100));
+    
+    if (!cleanupRef.current && isMountedRef.current) setAdminLoadProgress(75);
+    
+    // Navigate to admin dashboard
+    if (!cleanupRef.current && isMountedRef.current) {
+      setAdminLoadProgress(90);
+      cleanupRef.current = true; // Prevent further state updates
+      loader.innerHTML = '✅ Access granted!';
+      
+      // Brief success display before navigation
+      await new Promise(resolve => setTimeout(resolve, 300));
+      navigate('/admin');
+    }
+    
+    // Complete loading
+    if (!cleanupRef.current && isMountedRef.current) setAdminLoadProgress(100);
+    
+    // Calculate and log performance metrics
+    const endTime = performance.now();
+    const loadDuration = endTime - startTime;
+    
+    console.log('📊 Optimized Admin Load Performance:', {
+      duration: Math.round(loadDuration),
+      browser: BROWSER_INFO.name,
+      mobile: BROWSER_INFO.mobile,
+      timeout: timeoutDuration,
+      optimized: true
+    });
+    
+    // Track successful admin load
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'admin_load_success_optimized', {
+        load_duration: Math.round(loadDuration),
+        browser_name: BROWSER_INFO.name || 'unknown',
+        is_mobile: BROWSER_INFO.mobile || false
+      });
+    }
+    
+  } catch (error) {
+    if (cleanupRef.current || !isMountedRef.current) return; // Don't process errors after cleanup
+    
+    console.error('Optimized admin access error:', error);
+    
+    // Enhanced error categorization
+    let errorCategory = 'unknown';
+    let userFriendlyMessage = 'Failed to access admin dashboard';
+    
+    if (error.message.includes('fetch')) {
+      errorCategory = 'network';
+      userFriendlyMessage = 'Network connection issue. Please check your internet and try again.';
+    } else if (error.message.includes('localStorage') || error.message.includes('cookies')) {
+      errorCategory = 'storage';
+      userFriendlyMessage = 'Browser storage issue. Please enable cookies and refresh the page.';
+    } else if (error.message.includes('Browser does not support')) {
+      errorCategory = 'compatibility';
+      userFriendlyMessage = error.message;
+    } else if (error.name === 'TimeoutError') {
+      errorCategory = 'timeout';
+      userFriendlyMessage = 'Request timed out. The server may be busy. Please try again.';
+    }
+    
+    if (isMountedRef.current) {
+      setAdminError(userFriendlyMessage);
+    }
+    
+    loader.innerHTML = `❌ ${userFriendlyMessage} <button onclick="window.location.reload()">Retry</button>`;
+    
+    // Track admin load errors
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'admin_load_error_optimized', {
+        error_category: errorCategory,
+        error_message: error.message,
+        browser_name: BROWSER_INFO.name || 'unknown',
         is_mobile: BROWSER_INFO.mobile || false,
-        timestamp: Date.now()
+        retry_count: retryCount
       });
     }
     
-    // Adaptive progress interval based on device performance
-    const intervalDelay = BROWSER_INFO.mobile ? 150 : 100;
-    const progressInterval = setInterval(() => {
-      if (cleanupRef.current || !isMountedRef.current) {
-        clearInterval(progressInterval);
-        return;
-      }
-      setAdminLoadProgress(prev => {
-        if (prev >= 90) return prev;
-        return prev + Math.random() * 15;
-      });
-    }, intervalDelay);
-
-    // Browser-specific timeout (longer for mobile/slower browsers)
-    const timeoutDuration = BROWSER_INFO.mobile || 
-                           (BROWSER_INFO.name === 'Safari' && parseInt(BROWSER_INFO.version) < 14) ? 
-                           8000 : 5000;
+  } finally {
+    // Cleanup resources
+    clearTimeout(timeoutId);
     
-    const timeoutId = setTimeout(() => {
-      if (cleanupRef.current || !isMountedRef.current) return;
-      setShowForceExit(true);
-      setAdminError(`Loading timeout - Dashboard taking longer than expected (${timeoutDuration/1000}s timeout)`);
-      
-      // Track timeout events
-      if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'admin_load_timeout', {
-          timeout_duration: timeoutDuration,
-          browser_name: BROWSER_INFO.name || 'unknown',
-          is_mobile: BROWSER_INFO.mobile || false
-        });
-      }
-    }, timeoutDuration);
-
-    try {
-      // Enhanced browser compatibility checks
-      if (!window.fetch) {
-        throw new Error('Browser does not support fetch API. Please update your browser.');
+    // Remove loader after delay
+    setTimeout(() => {
+      if (loader && loader.parentNode) {
+        loader.remove();
       }
       
-      if (!window.localStorage) {
-        throw new Error('Browser does not support localStorage. Please enable cookies and try again.');
-      }
-      
-      // Ensure no overlays are blocking navigation
-      document.body.classList.add('admin-accessing');
-      document.body.classList.add('content-layer');
-      
-      // Add accessibility attributes
-      document.body.setAttribute('aria-busy', 'true');
-      document.body.setAttribute('aria-live', 'polite');
-      
-      // Browser-optimized loading stages
-      if (!cleanupRef.current && isMountedRef.current) setAdminLoadProgress(20);
-      await new Promise(resolve => setTimeout(resolve, BROWSER_INFO.mobile ? 300 : 200));
-      
-      // Preload critical admin resources
-      if (!cleanupRef.current && isMountedRef.current) setAdminLoadProgress(40);
-      if ('requestIdleCallback' in window) {
-        await new Promise(resolve => window.requestIdleCallback(resolve));
-      } else {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      
-      if (!cleanupRef.current && isMountedRef.current) setAdminLoadProgress(60);
-      await new Promise(resolve => setTimeout(resolve, BROWSER_INFO.mobile ? 400 : 300));
-      
-      // Navigate to admin dashboard
       if (!cleanupRef.current && isMountedRef.current) {
-        setAdminLoadProgress(80);
-        cleanupRef.current = true; // Prevent further state updates
-        navigate('/admin');
+        setIsAdminLoading(false);
+        setAdminLoadProgress(0);
       }
-      
-      // Complete loading with smooth transition
-      if (!cleanupRef.current && isMountedRef.current) setAdminLoadProgress(100);
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      // Calculate and log performance metrics
-      const endTime = performance.now();
-      const loadDuration = endTime - startTime;
-      
-      console.log('📊 Admin Load Performance:', {
-        duration: Math.round(loadDuration),
-        browser: BROWSER_INFO.name,
-        mobile: BROWSER_INFO.mobile,
-        timeout: timeoutDuration
-      });
-      
-      // Track successful admin load
-      if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'admin_load_success', {
-          load_duration: Math.round(loadDuration),
-          browser_name: BROWSER_INFO.name || 'unknown',
-          is_mobile: BROWSER_INFO.mobile || false
-        });
-      }
-      
-    } catch (error) {
-      if (cleanupRef.current || !isMountedRef.current) return; // Don't process errors after cleanup
-      
-      console.error('Admin access error:', error);
-      
-      // Enhanced error categorization
-      let errorCategory = 'unknown';
-      let userFriendlyMessage = 'Failed to access admin dashboard';
-      
-      if (error.message.includes('fetch')) {
-        errorCategory = 'network';
-        userFriendlyMessage = 'Network connection issue. Please check your internet and try again.';
-      } else if (error.message.includes('localStorage') || error.message.includes('cookies')) {
-        errorCategory = 'storage';
-        userFriendlyMessage = 'Browser storage issue. Please enable cookies and refresh the page.';
-      } else if (error.message.includes('Browser does not support')) {
-        errorCategory = 'compatibility';
-        userFriendlyMessage = error.message;
-      } else if (error.name === 'TimeoutError') {
-        errorCategory = 'timeout';
-        userFriendlyMessage = 'Request timed out. The server may be busy. Please try again.';
-      }
-      
-      if (isMountedRef.current) {
-        setAdminError(userFriendlyMessage);
-      }
-      
-      // Track admin load errors
-      if (typeof window !== 'undefined' && window.gtag) {
-        window.gtag('event', 'admin_load_error', {
-          error_category: errorCategory,
-          error_message: error.message,
-          browser_name: BROWSER_INFO.name || 'unknown',
-          is_mobile: BROWSER_INFO.mobile || false,
-          retry_count: retryCount
-        });
-      }
-      
-      // Implement simple retry logic without recursion
-      if (retryCount < 3 && errorCategory !== 'compatibility') {
-        const baseDelay = BROWSER_INFO.mobile ? 2000 : 1000;
-        const delay = Math.pow(2, retryCount) * baseDelay;
-        
-        setTimeout(() => {
-          if (!cleanupRef.current && isMountedRef.current) {
-            setRetryCount(prev => prev + 1);
-            // Don't call handleAdminAccess recursively - let user manually retry
-            setShowForceExit(true);
-          }
-        }, delay);
-      }
-      
-    } finally {
-      // Cleanup resources
-      clearInterval(progressInterval);
-      clearTimeout(timeoutId);
-      
-      setTimeout(() => {
-        if (!cleanupRef.current && isMountedRef.current) {
-          setIsAdminLoading(false);
-          setAdminLoadProgress(0);
-        }
-        document.body.classList.remove('admin-accessing');
-        document.body.classList.remove('content-layer');
-        document.body.removeAttribute('aria-busy');
-        document.body.removeAttribute('aria-live');
-      }, 500);
-    }
-  }, [isAdminLoading, navigate, retryCount]); // Removed browserInfo from dependencies since it's now static
+      document.body.classList.remove('admin-accessing');
+      document.body.classList.remove('content-layer');
+      document.body.removeAttribute('aria-busy');
+      document.body.removeAttribute('aria-live');
+      document.body.removeAttribute('data-admin-timeouts-cleared');
+    }, 800);
+  }
+}, [isAdminLoading, navigate, retryCount, clearAllAdminTimeouts, verifyAdminDirect]); // Updated dependencies
 
 // Force exit handler for emergency situations
 // Force exit handler for emergency situations

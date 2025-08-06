@@ -261,7 +261,102 @@ div[class*="overlay"][style*="position: fixed"] {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.6);
+}
+
+/* === CRITICAL ADMIN ACCESS FIXES === */
+/* Force remove all mask overlays that interfere with admin access */
+.overlay, .mask, .backdrop, .modal-backdrop {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -1000 !important;
+}
+
+/* Admin content gets highest priority */
+.admin-content {
+  z-index: 10000 !important;
+  position: relative;
+}
+
+/* Force admin panels to top layer */
+.admin-panel, .admin-dashboard {
+  z-index: 10001 !important;
+  position: relative !important;
+}
+
+/* Admin accessing state - remove all potential blockers */
+body.admin-accessing .overlay,
+body.admin-accessing .mask,
+body.admin-accessing .backdrop,
+body.admin-accessing .modal-backdrop,
+body.admin-accessing [class*="overlay"],
+body.admin-accessing [class*="mask"] {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  z-index: -1000 !important;
+}
+
+/* Emergency cleanup class */
+body.admin-emergency-exit * {
+  pointer-events: auto !important;
+}
+
+body.admin-emergency-exit .overlay,
+body.admin-emergency-exit .mask,
+body.admin-emergency-exit .backdrop {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  z-index: -1000 !important;
+}
+
+/* Mini admin loader (non-blocking) */
+.admin-mini-loader {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  z-index: 10002;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(4px);
+}
+
+.admin-mini-loader button {
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+/* Ensure admin timeouts are cleared */
+body[data-admin-timeouts-cleared="true"] .overlay {
+  display: none !important;
+}
+
+/* Force admin verification without masks */
+.admin-verification-direct {
+  position: static !important;
+  z-index: auto !important;
+  background: transparent !important;
+}
+
+.admin-verification-direct .overlay,
+.admin-verification-direct .mask {
+  display: none !important;
+}
   z-index: 10002;
   display: flex;
   align-items: center;
