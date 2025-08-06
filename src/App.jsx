@@ -1,7 +1,6 @@
 import '@/index.css';
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
-import { createSafeTimeout, performEmergencyCleanup, showEmergencyButton } from "@/utils/timeoutManager";
 import { ToastContainer } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import Header from "@/components/organisms/Header";
@@ -19,6 +18,7 @@ import ManageProducts from "@/components/pages/ManageProducts";
 import Cart from "@/components/pages/Cart";
 import AdminDashboard from "@/components/pages/AdminDashboard";
 import ReportsAnalytics from "@/components/pages/ReportsAnalytics";
+import { createSafeTimeout, performEmergencyCleanup, showEmergencyButton } from "@/utils/timeoutManager";
 // Browser detection at module level to avoid re-computation
 const detectBrowser = () => {
   const userAgent = navigator.userAgent;
@@ -61,13 +61,13 @@ function AppContent() {
   const [adminLoadProgress, setAdminLoadProgress] = useState(0);
   const [adminError, setAdminError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
-const [showForceExit, setShowForceExit] = useState(false);
+  const [showForceExit, setShowForceExit] = useState(false);
   const [emergencyCleanup, setEmergencyCleanup] = useState(false);
   const [performanceMetrics, setPerformanceMetrics] = useState({});
 
-  // Ref to track component mount status
+  // Refs to track component mount status and cleanup
   const isMountedRef = useRef(true);
-
+  const cleanupRef = useRef(false);
   // Initialize performance monitoring only once
   useEffect(() => {
     console.log('🔍 Browser Compatibility Check:', BROWSER_INFO);
@@ -174,7 +174,7 @@ const [showForceExit, setShowForceExit] = useState(false);
       }));
     };
 
-    // Monitor console errors
+// Monitor console errors
     const originalConsoleError = console.error;
     console.error = (...args) => {
       originalConsoleError.apply(console, args);
@@ -190,19 +190,93 @@ const [showForceExit, setShowForceExit] = useState(false);
       }
     };
 
+    // Global error handler for mask-related issues
+    const handleGlobalError = (e) => {
+      if (!isMountedRef.current) return;
+      
+      if (e.message.includes('mask') || e.message.includes('overlay')) {
+        console.error('Mask-related error detected:', e);
+        
+        // Remove all potential blocking elements
+        document.querySelectorAll('.overlay, .mask, .backdrop, .modal-backdrop').forEach(el => {
+          el.remove();
+        });
+        
+        // Track mask errors in analytics
+        if (typeof window !== 'undefined' && window.gtag) {
+          window.gtag('event', 'mask_error_cleanup', {
+            error_message: e.message,
+            browser_name: BROWSER_INFO.name || 'unknown',
+            route: window.location.pathname,
+            timestamp: Date.now()
+          });
+        }
+        
+        // Dispatch cleanup event
+        window.dispatchEvent(new CustomEvent('mask_cleanup_performed', {
+          detail: {
+            type: 'global_error_handler',
+            error: e.message,
+            timestamp: Date.now()
+          }
+        }));
+      }
+    };
+
+    // Periodically check for stuck masks
+    const maskCleanupInterval = setInterval(() => {
+      if (!isMountedRef.current) return;
+      
+      const masks = document.querySelectorAll('.mask, .overlay, .backdrop, .modal-backdrop');
+      if (masks.length > 0) {
+        console.warn('Stuck mask detected - removing:', masks.length, 'elements');
+        
+        masks.forEach(mask => {
+          // Log mask details before removal
+          console.log('Removing stuck mask:', {
+            className: mask.className,
+            id: mask.id,
+            tagName: mask.tagName,
+            style: mask.getAttribute('style')
+          });
+          mask.remove();
+        });
+        
+        // Track periodic cleanup in analytics
+        if (typeof window !== 'undefined' && window.gtag) {
+          window.gtag('event', 'periodic_mask_cleanup', {
+            masks_removed: masks.length,
+            browser_name: BROWSER_INFO.name || 'unknown',
+            route: window.location.pathname,
+            timestamp: Date.now()
+          });
+        }
+        
+        // Dispatch cleanup event
+        window.dispatchEvent(new CustomEvent('periodic_mask_cleanup', {
+          detail: {
+            type: 'periodic_cleanup',
+            masksRemoved: masks.length,
+            timestamp: Date.now()
+          }
+        }));
+}
+    }, 5000);
+
     // Initialize monitoring
     initPerformanceMonitoring();
     window.addEventListener('admin_mask_error', handleAdminMaskError);
+    window.addEventListener('error', handleGlobalError);
 
     // Cleanup on component unmount
     return () => {
       isMountedRef.current = false;
       window.removeEventListener('admin_mask_error', handleAdminMaskError);
+      window.removeEventListener('error', handleGlobalError);
+      clearInterval(maskCleanupInterval);
       console.error = originalConsoleError;
     };
-  }, []); // Empty dependency array is correct - this only runs once on mount
-
-const cleanupRef = useRef(false);
+  }, []);
   
 // Clear all admin timeouts utility
 const clearAllAdminTimeouts = useCallback(() => {
