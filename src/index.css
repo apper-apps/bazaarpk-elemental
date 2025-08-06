@@ -327,7 +327,8 @@ body.admin-emergency-exit .backdrop {
   align-items: center;
   gap: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+          backdrop-filter: blur(4px);
 }
 
 .admin-mini-loader button {
@@ -489,4 +490,97 @@ body.admin-emergency-exit .admin-loading-overlay {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
+}
+/* Emergency Mask Removal UI */
+.mask-emergency {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100000;
+  animation: slideInEmergency 0.3s ease;
+}
+
+.emergency-remove-btn {
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.emergency-remove-btn:hover {
+  background: linear-gradient(135deg, #b91c1c, #dc2626);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.5);
+}
+
+.emergency-remove-btn:active {
+  transform: translateY(0);
+}
+
+@keyframes slideInEmergency {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Timeout management styles */
+.timeout-warning {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.98);
+  padding: 24px 32px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  z-index: 10003;
+  text-align: center;
+  border: 2px solid #fbbf24;
+}
+
+.timeout-warning h3 {
+  color: #d97706;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.timeout-warning p {
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+.timeout-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.timeout-retry-btn {
+  background: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.timeout-retry-btn:hover {
+  background: #45a049;
 }

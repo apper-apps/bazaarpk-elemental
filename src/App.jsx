@@ -1,6 +1,7 @@
 import '@/index.css';
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
+import { createSafeTimeout, performEmergencyCleanup, showEmergencyButton } from "@/utils/timeoutManager";
 import { ToastContainer } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import Header from "@/components/organisms/Header";
@@ -60,7 +61,8 @@ function AppContent() {
   const [adminLoadProgress, setAdminLoadProgress] = useState(0);
   const [adminError, setAdminError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [showForceExit, setShowForceExit] = useState(false);
+const [showForceExit, setShowForceExit] = useState(false);
+  const [emergencyCleanup, setEmergencyCleanup] = useState(false);
   const [performanceMetrics, setPerformanceMetrics] = useState({});
 
   // Ref to track component mount status
@@ -270,8 +272,18 @@ const handleAdminAccess = useCallback(async () => {
   // Reduced timeout for faster response
   const timeoutDuration = BROWSER_INFO.mobile ? 3000 : 2000;
   
-  const timeoutId = setTimeout(() => {
+const timeoutId = createSafeTimeout(() => {
     if (cleanupRef.current || !isMountedRef.current) return;
+    
+    // Check if dashboard has loaded
+    const dashboardLoaded = document.querySelector('.admin-dashboard');
+    if (!dashboardLoaded) {
+      console.warn('Dashboard timeout - forcing display');
+      setEmergencyCleanup(true);
+      performEmergencyCleanup();
+      showEmergencyButton();
+    }
+    
     setShowForceExit(true);
     setAdminError(`Loading timeout - Dashboard taking longer than expected (${timeoutDuration/1000}s timeout)`);
     loader.innerHTML = `❌ Timeout reached <button onclick="window.location.reload()">Retry</button>`;
@@ -618,6 +630,19 @@ const handleAdminAccess = useCallback(async () => {
           pauseOnHover
         />
         
+        {/* Emergency Mask Removal UI */}
+        {emergencyCleanup && (
+          <div className="mask-emergency">
+            <button 
+              onClick={performEmergencyCleanup}
+              className="emergency-remove-btn"
+              title="Force remove blocking overlays"
+            >
+              ✖ Force Remove Mask
+            </button>
+          </div>
+        )}
+        
         {/* Admin Access Portal - Footer Entry Point */}
         <footer className="bg-gray-900 text-white py-8 mt-16">
           <div className="container mx-auto px-4">
@@ -686,7 +711,7 @@ onClick={(e) => {
   );
 }
 
-function App() {
+function MainApp() {
   return (
     <BrowserRouter>
       <AppContent />
@@ -694,4 +719,4 @@ function App() {
   );
 }
 
-export default App;
+export default MainApp;
