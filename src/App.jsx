@@ -2,7 +2,6 @@ import '@/index.css';
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-import MainApp from "@/index.css";
 import ApperIcon from "@/components/ApperIcon";
 import Header from "@/components/organisms/Header";
 import CartDrawer from "@/components/organisms/CartDrawer";
@@ -156,11 +155,11 @@ function AppContent() {
           route: window.location.pathname,
           timestamp: Date.now()
         });
-      }
+}
       
       // Dispatch enhanced custom event for error tracking
-      window.dispatchEvent(new CustomEvent('admin_debug_log', {
-        detail: {
+      try {
+        const eventDetail = {
           type: 'mask_error',
           severity: 'high',
           data: e.detail,
@@ -171,8 +170,18 @@ function AppContent() {
             browserInfo: BROWSER_INFO,
             performanceMetrics
           }
+        };
+        
+        if (typeof CustomEvent === 'function') {
+          window.dispatchEvent(new CustomEvent('admin_debug_log', { detail: eventDetail }));
+        } else if (document.createEvent) {
+          const event = document.createEvent('CustomEvent');
+          event.initCustomEvent('admin_debug_log', false, false, eventDetail);
+          window.dispatchEvent(event);
         }
-      }));
+      } catch (eventError) {
+        console.warn('Failed to dispatch admin debug event:', eventError);
+      }
     };
 
 // Monitor console errors
@@ -211,16 +220,26 @@ function AppContent() {
             route: window.location.pathname,
             timestamp: Date.now()
           });
-        }
+}
         
         // Dispatch cleanup event
-        window.dispatchEvent(new CustomEvent('mask_cleanup_performed', {
-          detail: {
+        try {
+          const eventDetail = {
             type: 'global_error_handler',
             error: e.message,
             timestamp: Date.now()
+          };
+          
+          if (typeof CustomEvent === 'function') {
+            window.dispatchEvent(new CustomEvent('mask_cleanup_performed', { detail: eventDetail }));
+          } else if (document.createEvent) {
+            const event = document.createEvent('CustomEvent');
+            event.initCustomEvent('mask_cleanup_performed', false, false, eventDetail);
+            window.dispatchEvent(event);
           }
-        }));
+        } catch (eventError) {
+          console.warn('Failed to dispatch mask cleanup event:', eventError);
+        }
       }
     };
 
@@ -251,17 +270,27 @@ function AppContent() {
             route: window.location.pathname,
             timestamp: Date.now()
           });
-        }
+}
         
         // Dispatch cleanup event
-        window.dispatchEvent(new CustomEvent('periodic_mask_cleanup', {
-          detail: {
+        try {
+          const eventDetail = {
             type: 'periodic_cleanup',
             masksRemoved: masks.length,
             timestamp: Date.now()
+          };
+          
+          if (typeof CustomEvent === 'function') {
+            window.dispatchEvent(new CustomEvent('periodic_mask_cleanup', { detail: eventDetail }));
+          } else if (document.createEvent) {
+            const event = document.createEvent('CustomEvent');
+            event.initCustomEvent('periodic_mask_cleanup', false, false, eventDetail);
+            window.dispatchEvent(event);
           }
-        }));
-}
+        } catch (eventError) {
+          console.warn('Failed to dispatch periodic cleanup event:', eventError);
+        }
+      }
     }, 5000);
 
     // Initialize monitoring
