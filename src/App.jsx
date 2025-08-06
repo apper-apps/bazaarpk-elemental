@@ -1,6 +1,6 @@
 import '@/index.css';
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { BrowserRouter, Route, Routes, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import Header from "@/components/organisms/Header";
@@ -581,18 +581,19 @@ if (!cleanupRef.current && isMountedRef.current) {
   return (
     <div className="app-container">
       <div className="min-h-screen bg-background">
-        {isAdminLoading && (
+{isAdminLoading && (
           <div className="admin-progress-bar" role="progressbar" aria-valuenow={adminLoadProgress} aria-valuemin="0" aria-valuemax="100">
             <div 
               className="admin-progress-fill" 
               style={{ width: `${adminLoadProgress}%` }}
             />
-</div>
+          </div>
+        )}
           
-          {/* Non-blocking admin loading indicator */}
-          {adminLoadProgress > 0 && adminLoadProgress < 100 && (
-            <div className="admin-mini-loader">
-              <div className="flex items-center space-x-2">
+        {/* Non-blocking admin loading indicator */}
+        {adminLoadProgress > 0 && adminLoadProgress < 100 && (
+          <div className="admin-mini-loader">
+            <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 border-2 border-gray-300 border-t-green-500 rounded-full animate-spin" />
                 <span className="text-sm text-gray-700">
                   {adminLoadProgress < 20 ? 'Loading...' : 
@@ -627,9 +628,7 @@ if (!cleanupRef.current && isMountedRef.current) {
                 </div>
 </div>
             </div>
-)}
-        </>
-        )}
+          )}
         
         <Header />
         
