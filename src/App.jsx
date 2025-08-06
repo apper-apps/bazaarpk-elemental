@@ -402,17 +402,8 @@ const timeoutId = createSafeTimeout(() => {
     }
   }, timeoutDuration);
 
-  try {
+try {
     // Enhanced browser compatibility checks
-    if (!window.fetch) {
-      throw new Error('Browser does not support fetch API. Please update your browser.');
-    }
-    
-throw new Error('Browser does not support localStorage. Please enable cookies and try again.');
-    }
-    
-    // Enhanced browser compatibility checks
-    if (!window.fetch) {
     if (!window.fetch) {
       throw new Error('Browser does not support fetch API. Please update your browser.');
     }
@@ -693,8 +684,7 @@ if (!cleanupRef.current && isMountedRef.current) {
 onClose={() => setIsCartDrawerOpen(false)} 
         />
         
-        <ToastContainer
-          position="top-right"
+<ToastContainer
           position="top-right"
           autoClose={3000}
           hideProgressBar={false}
@@ -780,8 +770,9 @@ onClose={() => setIsCartDrawerOpen(false)}
               </p>
             </div>
           </div>
-        </footer>
+</footer>
       </div>
+    </div>
   );
 }
 
