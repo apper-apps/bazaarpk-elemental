@@ -312,34 +312,24 @@ body.admin-emergency-exit .backdrop {
   z-index: -1000 !important;
 }
 
-/* Mini admin loader (non-blocking) */
+/* Mini admin loader (minimal, non-blocking) */
 .admin-mini-loader {
   position: fixed;
   top: 20px;
   right: 20px;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  z-index: 10002;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  -webkit-backdrop-filter: blur(4px);
-          backdrop-filter: blur(4px);
+  background: white;
+  padding: 10px 15px;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  z-index: 10000;
+  font-size: 14px;
+  animation: pulse 1.5s infinite;
 }
 
-.admin-mini-loader button {
-  background: #dc2626;
-  color: white;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  cursor: pointer;
-  margin-left: 8px;
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
 }
 
 /* Ensure admin timeouts are cleared */
@@ -357,90 +347,6 @@ body[data-admin-timeouts-cleared="true"] .overlay {
 .admin-verification-direct .overlay,
 .admin-verification-direct .mask {
   display: none !important;
-}
-
-/* Admin loading overlay with proper structure */
-.admin-loading-overlay-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 10002;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: fadeInOverlay 0.3s ease;
-}
-
-.admin-loading-modal {
-  background: white;
-  padding: 32px;
-  border-radius: 16px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  max-width: 320px;
-  width: 90%;
-  animation: slideInModal 0.4s ease;
-}
-
-.admin-loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #e5e7eb;
-  border-top: 3px solid #4CAF50;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 16px;
-}
-
-.admin-loading-text {
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 12px;
-}
-
-.admin-error-message {
-  margin-top: 16px;
-  padding: 12px;
-  background: #fef2f2;
-  border-radius: 8px;
-  border: 1px solid #fecaca;
-}
-
-.admin-force-exit-btn {
-  margin-top: 16px;
-  padding: 8px 16px;
-  background: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.admin-force-exit-btn:hover {
-  background: #dc2626;
-}
-
-@keyframes fadeInOverlay {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideInModal {
-  from { 
-    transform: scale(0.9) translateY(-10px);
-    opacity: 0;
-  }
-  to { 
-    transform: scale(1) translateY(0);
-    opacity: 1;
-  }
 }
 
 /* Admin Content Fade-in Animation */
@@ -491,6 +397,7 @@ body.admin-emergency-exit .admin-loading-overlay {
   visibility: hidden !important;
   pointer-events: none !important;
 }
+
 /* Emergency Mask Removal UI */
 .mask-emergency {
   position: fixed;

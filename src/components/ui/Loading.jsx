@@ -153,6 +153,22 @@ const Loading = ({ className, type = "skeleton", ...props }) => {
     );
   }
 
+// Minimal admin loader (non-blocking)
+  if (type === "admin-minimal") {
+    return (
+      <div 
+        className="admin-mini-loader"
+        role="status"
+        aria-live="polite"
+        aria-label="Loading..."
+        {...props}
+      >
+        Loading...
+        <span className="sr-only">Loading admin content...</span>
+      </div>
+    );
+  }
+
   // Enhanced skeleton for admin dashboard
   if (type === "admin") {
     return (
