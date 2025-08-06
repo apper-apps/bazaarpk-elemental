@@ -153,9 +153,9 @@ function AppContent() {
           browser_version: BROWSER_INFO.version || 'unknown',
           is_mobile: BROWSER_INFO.mobile || false,
           route: window.location.pathname,
-          timestamp: Date.now()
+timestamp: Date.now()
         });
-}
+      }
       
       // Dispatch enhanced custom event for error tracking
       try {
@@ -218,9 +218,9 @@ function AppContent() {
             error_message: e.message,
             browser_name: BROWSER_INFO.name || 'unknown',
             route: window.location.pathname,
-            timestamp: Date.now()
+timestamp: Date.now()
           });
-}
+        }
         
         // Dispatch cleanup event
         try {
@@ -268,9 +268,9 @@ function AppContent() {
             masks_removed: masks.length,
             browser_name: BROWSER_INFO.name || 'unknown',
             route: window.location.pathname,
-            timestamp: Date.now()
+timestamp: Date.now()
           });
-}
+        }
         
         // Dispatch cleanup event
         try {
@@ -408,11 +408,11 @@ const timeoutId = createSafeTimeout(() => {
       throw new Error('Browser does not support fetch API. Please update your browser.');
     }
     
-    if (!window.localStorage) {
-      throw new Error('Browser does not support localStorage. Please enable cookies and try again.');
-}
+throw new Error('Browser does not support localStorage. Please enable cookies and try again.');
+    }
     
     // Enhanced browser compatibility checks
+    if (!window.fetch) {
     if (!window.fetch) {
       throw new Error('Browser does not support fetch API. Please update your browser.');
     }
@@ -625,11 +625,10 @@ if (!cleanupRef.current && isMountedRef.current) {
                       Dismiss
                     </button>
                   )}
-                </div>
 </div>
+              </div>
             </div>
           )}
-        
         <Header />
         
         <main>
@@ -639,7 +638,6 @@ if (!cleanupRef.current && isMountedRef.current) {
             <Route path="/cart" element={<Cart />} />
             <Route path="/category" element={<Category />} />
             <Route path="/deals" element={<Category />} />
-            
 {/* Admin Dashboard Routes */}
             <Route path="/admin" element={
               <div className="admin-dashboard fade-in-admin">
@@ -692,11 +690,11 @@ if (!cleanupRef.current && isMountedRef.current) {
         </main>
 
         <CartDrawer 
-          isOpen={isCartDrawerOpen} 
-          onClose={() => setIsCartDrawerOpen(false)} 
-/>
+onClose={() => setIsCartDrawerOpen(false)} 
+        />
         
         <ToastContainer
+          position="top-right"
           position="top-right"
           autoClose={3000}
           hideProgressBar={false}
@@ -739,8 +737,9 @@ if (!cleanupRef.current && isMountedRef.current) {
                   <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
                   <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
                 </ul>
-              </div>
-<div>
+</div>
+              
+              <div>
                 <h4 className="font-medium mb-4">System</h4>
                 <div className="space-y-2">
                   <a
@@ -771,7 +770,7 @@ if (!cleanupRef.current && isMountedRef.current) {
                       <span>Admin Access</span>
                     </button>
                   </a>
-                </div>
+</div>
               </div>
             </div>
             
