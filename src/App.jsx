@@ -1,6 +1,6 @@
 import '@/index.css';
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useNavigate, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import Header from "@/components/organisms/Header";
@@ -410,13 +410,17 @@ const timeoutId = createSafeTimeout(() => {
     
     if (!window.localStorage) {
       throw new Error('Browser does not support localStorage. Please enable cookies and try again.');
+}
+    
+    // Enhanced browser compatibility checks
+    if (!window.fetch) {
+      throw new Error('Browser does not support fetch API. Please update your browser.');
     }
     
-    // Ensure no overlays are blocking navigation
-    document.body.classList.add('admin-accessing');
-    document.body.classList.add('content-layer');
+    if (!window.localStorage) {
+      throw new Error('Browser does not support localStorage. Please enable cookies and try again.');
+    }
     
-    // Add accessibility attributes
     document.body.setAttribute('aria-busy', 'true');
     document.body.setAttribute('aria-live', 'polite');
     
@@ -523,19 +527,13 @@ const timeoutId = createSafeTimeout(() => {
         loader.remove();
       }
       
-      if (!cleanupRef.current && isMountedRef.current) {
+if (!cleanupRef.current && isMountedRef.current) {
         setIsAdminLoading(false);
-        setAdminLoadProgress(0);
       }
-      document.body.classList.remove('admin-accessing');
-      document.body.classList.remove('content-layer');
-      document.body.removeAttribute('aria-busy');
-      document.body.removeAttribute('aria-live');
       document.body.removeAttribute('data-admin-timeouts-cleared');
     }, 800);
   }
-}, [isAdminLoading, navigate, retryCount, clearAllAdminTimeouts, verifyAdminDirect]); // Updated dependencies
-
+}, [isAdminLoading, navigate, retryCount, clearAllAdminTimeouts, verifyAdminDirect]);
 // Force exit handler for emergency situations
 // Force exit handler for emergency situations
   const handleForceExit = useCallback(() => {
@@ -576,13 +574,14 @@ const timeoutId = createSafeTimeout(() => {
     
     // Navigate to safe route
     navigate('/');
-  }, [navigate, adminError]); // Removed browserInfo from dependencies
+}, [navigate, adminError]);
 
+  const location = useLocation();
+  
   return (
-<div className="min-h-screen bg-background content-layer">
-      {/* Admin Loading Progress Bar */}
-{isAdminLoading && (
-        <>
+    <div className="app-container">
+      <div className="min-h-screen bg-background">
+        {isAdminLoading && (
           <div className="admin-progress-bar" role="progressbar" aria-valuenow={adminLoadProgress} aria-valuemin="0" aria-valuemax="100">
             <div 
               className="admin-progress-fill" 
@@ -628,12 +627,13 @@ const timeoutId = createSafeTimeout(() => {
                 </div>
 </div>
             </div>
-          )}
+)}
         </>
-      )}
-      <Header />
+        )}
         
-<main>
+        <Header />
+        
+        <main>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/product/:id" element={<ProductDetail />} />
@@ -641,8 +641,8 @@ const timeoutId = createSafeTimeout(() => {
             <Route path="/category" element={<Category />} />
             <Route path="/deals" element={<Category />} />
             
-            {/* Admin Dashboard Routes */}
-<Route path="/admin" element={
+{/* Admin Dashboard Routes */}
+            <Route path="/admin" element={
               <div className="admin-dashboard fade-in-admin">
                 <AdminDashboard />
               </div>
@@ -695,8 +695,9 @@ const timeoutId = createSafeTimeout(() => {
         <CartDrawer 
           isOpen={isCartDrawerOpen} 
           onClose={() => setIsCartDrawerOpen(false)} 
-        />
-<ToastContainer
+/>
+        
+        <ToastContainer
           position="top-right"
           autoClose={3000}
           hideProgressBar={false}
@@ -707,7 +708,6 @@ const timeoutId = createSafeTimeout(() => {
           draggable
           pauseOnHover
         />
-        
         {/* Emergency Mask Removal UI */}
         {emergencyCleanup && (
           <div className="mask-emergency">
@@ -741,7 +741,6 @@ const timeoutId = createSafeTimeout(() => {
                   <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
                 </ul>
               </div>
-              
 <div>
                 <h4 className="font-medium mb-4">System</h4>
                 <div className="space-y-2">
@@ -749,8 +748,7 @@ const timeoutId = createSafeTimeout(() => {
                     href="/admin-dashboard"
                     className="admin-access-link"
                     data-role="admin-entry"
-                    aria-label="Access admin dashboard"
-onClick={(e) => {
+                    onClick={(e) => {
                       e.preventDefault();
                       handleAdminAccess();
                     }}
