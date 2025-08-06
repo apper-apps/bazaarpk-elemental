@@ -119,15 +119,36 @@ body.admin-accessing .loading-overlay {
   background: white !important;
 }
 
-/* Force hide any persistent overlays on admin routes */
-body[class*="admin"] .overlay,
-body[class*="admin"] .mask,
-body[class*="admin"] .backdrop {
-  display: none !important;
+/* Footer admin access fixes */
+footer {
+  position: relative;
+  z-index: 1000 !important;
 }
 
-/* Admin loading indicator styles */
-.admin-loading-indicator {
+footer button,
+footer a {
+  position: relative;
+  z-index: 1001 !important;
+  pointer-events: auto !important;
+}
+
+/* Remove blocking overlays */
+.overlay,
+.mask,
+.backdrop,
+.modal-backdrop {
+  pointer-events: none !important;
+}
+
+/* Ensure admin access button is clickable */
+.admin-access-link,
+[data-role="admin-entry"] {
+  pointer-events: auto !important;
+  z-index: 1002 !important;
+}
+
+/* Admin loading spinner */
+.admin-loading-spinner {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -140,22 +161,31 @@ body[class*="admin"] .backdrop {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
 }
 
-.admin-loading-indicator .spinner {
-  width: 24px;
-  height: 24px;
+.admin-loading-spinner .spinner {
+  width: 32px;
+  height: 32px;
   border: 2px solid #e5e7eb;
   border-top: 2px solid #4CAF50;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
+/* Remove all overlay blocking for admin access */
+body .overlay,
+body .mask,
+body .backdrop,
+body .modal-backdrop,
+body [class*="overlay"],
+body [class*="mask"] {
+  pointer-events: none !important;
+  z-index: -1000 !important;
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
-}
 
 /* Ensure proper stacking for admin navigation */
 .admin-nav,
@@ -296,23 +326,40 @@ body.admin-emergency-exit .backdrop {
   font-size: 14px;
   animation: pulse 1.5s infinite;
 }
+}
 
 @keyframes pulse {
-  0% { opacity: 1; }
+  0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
-  100% { opacity: 1; }
 }
 
-/* Ensure admin timeouts are cleared */
-body[data-admin-timeouts-cleared="true"] .overlay {
-  display: none !important;
+/* Simplified admin mini loader */
+.admin-mini-loader {
+  position: fixed !important;
+  right: 20px !important;
+  background: #4CAF50 !important;
+  color: white !important;
+  padding: 12px 16px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  z-index: 10000 !important;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+  pointer-events: auto !important;
 }
 
-/* Force admin verification without masks */
-.admin-verification-direct {
-  position: static !important;
-  z-index: auto !important;
-  background: transparent !important;
+.admin-mini-loader button {
+  background: none !important;
+  border: 1px solid white !important;
+  color: white !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-size: 12px !important;
+  margin-left: 8px !important;
+}
+
+body.admin-emergency-exit * {
+  pointer-events: auto !important;
 }
 
 .admin-verification-direct .overlay,
