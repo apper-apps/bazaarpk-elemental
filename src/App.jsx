@@ -5,7 +5,7 @@ import { ToastContainer } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import Header from "@/components/organisms/Header";
 import CartDrawer from "@/components/organisms/CartDrawer";
-import { Error } from "@/components/ui/Error";
+import Error from "@/components/ui/Error";
 import UserManagement from "@/components/pages/UserManagement";
 import AddRecipeBundle from "@/components/pages/AddRecipeBundle";
 import Home from "@/components/pages/Home";
@@ -66,8 +66,9 @@ function AppContent() {
   const [performanceMetrics, setPerformanceMetrics] = useState({});
 
   // Refs to track component mount status and cleanup
-  const isMountedRef = useRef(true);
+const isMountedRef = useRef(true);
   const cleanupRef = useRef(false);
+  const maskCleanupIntervalRef = useRef(null);
   // Initialize performance monitoring only once
   useEffect(() => {
     console.log('🔍 Browser Compatibility Check:', BROWSER_INFO);
@@ -243,7 +244,6 @@ timestamp: Date.now()
       }
     };
 // Periodically check for stuck masks with comprehensive detection
-    const maskCleanupIntervalRef = useRef(null);
     
     maskCleanupIntervalRef.current = setInterval(() => {
       if (!isMountedRef.current) {
