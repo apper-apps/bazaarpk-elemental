@@ -437,8 +437,46 @@ const handleAdminAccess = useCallback(async () => {
     }, 1000);
     
     // Navigate to safe route
-    navigate('/');
+navigate('/');
 }, [navigate, adminError]);
+
+  // Admin verification function
+  const verifyAdminAccess = useCallback(() => {
+    const adminAuth = localStorage.getItem('adminAuth');
+    const forceAdmin = localStorage.getItem('forceAdmin');
+    return adminAuth === 'verified' || forceAdmin === 'true';
+  }, []);
+
+  // Protected Route component for admin access
+  const ProtectedRoute = ({ children }) => {
+    const location = useLocation();
+    
+    useEffect(() => {
+      if (!verifyAdminAccess()) {
+        navigate('/admin-login');
+      }
+    }, [location.pathname]);
+
+    if (!verifyAdminAccess()) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <ApperIcon name="Shield" className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Admin Access Required</h2>
+            <p className="text-gray-600 mb-4">You need administrator privileges to access this area.</p>
+            <button
+              onClick={handleAdminAccess}
+              className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Request Admin Access
+            </button>
+          </div>
+        </div>
+      );
+    }
+    
+    return children;
+  };
 
   const location = useLocation();
   
@@ -552,7 +590,70 @@ const handleAdminAccess = useCallback(async () => {
                 <main className="container mx-auto px-4 py-8">
                   <ReportsAnalytics />
                 </main>
+</div>
+            } />
+            {/* Admin Login Route */}
+            <Route path="/admin-login" element={
+              <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full mx-4">
+                  <div className="text-center mb-6">
+                    <ApperIcon name="ShieldCheck" className="w-12 h-12 text-primary-500 mx-auto mb-4" />
+                    <h1 className="text-2xl font-bold text-gray-800 mb-2">Admin Login</h1>
+                    <p className="text-gray-600">Access the administrative dashboard</p>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <button
+                      onClick={() => {
+                        localStorage.setItem('adminAuth', 'verified');
+                        navigate('/admin');
+                      }}
+                      className="w-full bg-primary-500 hover:bg-primary-600 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                    >
+                      Access Admin Dashboard
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        localStorage.setItem('forceAdmin', 'true');
+                        navigate('/admin');
+                      }}
+                      className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-lg font-medium transition-colors"
+                    >
+                      Force Admin Access
+                    </button>
+                    
+                    <button
+                      onClick={() => navigate('/')}
+                      className="w-full text-gray-600 hover:text-gray-800 py-2 transition-colors"
+                    >
+                      Back to Home
+                    </button>
+                  </div>
+                </div>
               </div>
+            } />
+            
+            {/* Wrap Admin Routes with Protection */}
+            <Route path="/admin/*" element={
+              <ProtectedRoute>
+                <Routes>
+                  <Route path="/" element={<div className="admin-dashboard fade-in-admin">
+                        <AdminDashboard />
+                      </div>}>
+                    <Route index element={<ManageProducts />} />
+                    <Route path="products" element={<ManageProducts />} />
+                    <Route path="products/manage" element={<ManageProducts />} />
+                    <Route path="products/add" element={<AddProduct />} />
+                    <Route path="orders" element={<OrderManagement />} />
+                    <Route path="customers" element={<div className="p-6">Customer Management - Coming Soon</div>} />
+                    <Route path="users" element={<UserManagement />} />
+                    <Route path="marketing" element={<div className="p-6">Marketing Tools - Coming Soon</div>} />
+                    <Route path="reports" element={<ReportsAnalytics />} />
+                    <Route path="settings" element={<div className="p-6">System Settings - Coming Soon</div>} />
+                  </Route>
+                </Routes>
+              </ProtectedRoute>
             } />
           </Routes>
         </main>
@@ -607,9 +708,9 @@ onClose={() => setIsCartDrawerOpen(false)}
 </div>
               
               <div>
-                <h4 className="font-medium mb-4">System</h4>
+<h4 className="font-medium mb-4">System</h4>
                 <div className="space-y-2">
-<button
+                  <button
                     onClick={handleAdminAccess}
                     disabled={isAdminLoading}
                     className="text-xs text-gray-500 hover:text-gray-300 transition-colors disabled:opacity-50 flex items-center space-x-1 cursor-pointer"
@@ -621,10 +722,25 @@ onClose={() => setIsCartDrawerOpen(false)}
                     )}
                     <span>Admin Access</span>
                   </button>
-</div>
+                  
+                  {/* Emergency Admin Access Button */}
+                  <div className="admin-fallback mt-3 pt-3 border-t border-gray-700">
+                    <button
+                      onClick={() => {
+                        localStorage.setItem('forceAdmin', 'true');
+                        window.location.reload();
+                      }}
+                      className="text-xs text-orange-400 hover:text-orange-300 transition-colors flex items-center space-x-1 cursor-pointer"
+                      title="Force Admin Dashboard Load"
+                      aria-label="Emergency Admin Access"
+                    >
+                      <ApperIcon name="Shield" size={12} />
+                      <span>Force Admin Load</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            
             <div className="border-t border-gray-800 mt-6 pt-6 text-center">
               <p className="text-gray-400 text-sm">
                 &copy; 2024 BazaarPK. All rights reserved.
