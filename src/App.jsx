@@ -5,7 +5,7 @@ import { ToastContainer } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import Header from "@/components/organisms/Header";
 import CartDrawer from "@/components/organisms/CartDrawer";
-import Error from "@/components/ui/Error";
+import { Error } from "@/components/ui/Error";
 import UserManagement from "@/components/pages/UserManagement";
 import AddRecipeBundle from "@/components/pages/AddRecipeBundle";
 import Home from "@/components/pages/Home";
@@ -242,24 +242,63 @@ timestamp: Date.now()
         }
       }
     };
-
-    // Periodically check for stuck masks
-    const maskCleanupInterval = setInterval(() => {
-      if (!isMountedRef.current) return;
+// Periodically check for stuck masks with comprehensive detection
+    const maskCleanupIntervalRef = useRef(null);
+    
+    maskCleanupIntervalRef.current = setInterval(() => {
+      if (!isMountedRef.current) {
+        if (maskCleanupIntervalRef.current) {
+          clearInterval(maskCleanupIntervalRef.current);
+          maskCleanupIntervalRef.current = null;
+        }
+        return;
+      }
       
-      const masks = document.querySelectorAll('.mask, .overlay, .backdrop, .modal-backdrop');
+      // Enhanced mask detection - catch all possible overlay elements
+      const maskSelectors = [
+        '.mask', '.overlay', '.backdrop', '.modal-backdrop',
+        '.loading-overlay', '.admin-loading-overlay',
+        '[class*="overlay"]', '[class*="mask"]', '[class*="backdrop"]',
+        '[style*="position: fixed"][style*="background"]',
+        '.ReactModal__Overlay', '.Modal__Overlay',
+        '[role="dialog"] + div[style*="position: fixed"]'
+      ].join(', ');
+      
+      const masks = document.querySelectorAll(maskSelectors);
+      
       if (masks.length > 0) {
         console.warn('Stuck mask detected - removing:', masks.length, 'elements');
         
-        masks.forEach(mask => {
-          // Log mask details before removal
-          console.log('Removing stuck mask:', {
-            className: mask.className,
-            id: mask.id,
-            tagName: mask.tagName,
-            style: mask.getAttribute('style')
-          });
-          mask.remove();
+        masks.forEach((mask, index) => {
+          try {
+            // Log mask details before removal
+            console.log(`Removing stuck mask ${index + 1}:`, {
+              className: mask.className,
+              id: mask.id,
+              tagName: mask.tagName,
+              style: mask.getAttribute('style'),
+              computedStyle: window.getComputedStyle(mask).position
+            });
+            
+            // Remove with fade out for smoother UX
+            mask.style.transition = 'opacity 0.2s ease';
+            mask.style.opacity = '0';
+            
+            setTimeout(() => {
+              if (mask.parentNode) {
+                mask.remove();
+              }
+            }, 200);
+            
+          } catch (error) {
+            console.error('Error removing mask:', error);
+            // Force remove if smooth removal fails
+            try {
+              mask.remove();
+            } catch (forceError) {
+              console.error('Force removal also failed:', forceError);
+            }
+          }
         });
         
         // Track periodic cleanup in analytics
@@ -299,11 +338,14 @@ timestamp: Date.now()
     window.addEventListener('error', handleGlobalError);
 
     // Cleanup on component unmount
-    return () => {
+return () => {
       isMountedRef.current = false;
       window.removeEventListener('admin_mask_error', handleAdminMaskError);
       window.removeEventListener('error', handleGlobalError);
-      clearInterval(maskCleanupInterval);
+      if (maskCleanupIntervalRef.current) {
+        clearInterval(maskCleanupIntervalRef.current);
+        maskCleanupIntervalRef.current = null;
+      }
       console.error = originalConsoleError;
     };
   }, []);
@@ -356,6 +398,31 @@ const handleAdminAccess = useCallback(async () => {
     overlays.forEach(overlay => {
       overlay.remove();
     });
+// Immediate mask cleanup before navigation
+    const immediateCleanupSelectors = [
+      '.mask', '.overlay', '.backdrop', '.modal-backdrop',
+      '.loading-overlay', '.admin-loading-overlay',
+      '[class*="overlay"]', '[class*="mask"]', '[class*="backdrop"]',
+      '[style*="position: fixed"][style*="background"]'
+    ].join(', ');
+    
+    const immediateMasks = document.querySelectorAll(immediateCleanupSelectors);
+    if (immediateMasks.length > 0) {
+      console.log('Removing masks before admin navigation:', immediateMasks.length);
+      immediateMasks.forEach(mask => {
+        try {
+          mask.remove();
+        } catch (error) {
+          console.error('Error in immediate mask cleanup:', error);
+        }
+      });
+    }
+    
+    // Clear mask cleanup interval
+    if (maskCleanupIntervalRef.current) {
+      clearInterval(maskCleanupIntervalRef.current);
+      maskCleanupIntervalRef.current = null;
+    }
     
     // Ensure body has no blocking classes
     document.body.classList.remove('admin-accessing', 'content-layer', 'modal-open', 'overflow-hidden');
