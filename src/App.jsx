@@ -339,68 +339,43 @@ const handleAdminAccess = useCallback(async () => {
   // Prevent multiple simultaneous calls
   if (isAdminLoading) return;
   
-  console.log('🔐 Admin access requested...');
-  
-  // Set loading state
-  setIsAdminLoading(true);
-  setAdminError(null);
-  
-  // Show simple loading indicator
-  const loader = document.createElement('div');
-  loader.className = 'admin-mini-loader';
-  loader.innerHTML = '🔐 Accessing admin dashboard...';
-  loader.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #4CAF50;
-    color: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    font-size: 14px;
-    z-index: 10000;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  `;
-  document.body.appendChild(loader);
+  console.log('🔐 Admin access requested - Direct navigation');
   
   try {
-    // Simple admin verification
-    const hasAdminAccess = localStorage.getItem('userRole') === 'admin' || 
-                          sessionStorage.getItem('adminToken') || 
-                          true; // Allow access for demo
+    // Set loading state briefly
+    setIsAdminLoading(true);
+    setAdminError(null);
     
-    if (!hasAdminAccess) {
-      // Set basic admin credentials for demo
-      localStorage.setItem('userRole', 'admin');
-      localStorage.setItem('adminToken', 'demo-admin-' + Date.now());
-    }
+    // Set admin credentials for demo
+    localStorage.setItem('userRole', 'admin');
+    localStorage.setItem('adminToken', 'demo-admin-' + Date.now());
+    localStorage.setItem('adminAuth', 'verified');
     
-    // Brief delay for visual feedback
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Remove any existing overlays or masks immediately
+    const overlays = document.querySelectorAll('.overlay, .mask, .backdrop, .modal-backdrop, [class*="overlay"], [class*="mask"]');
+    overlays.forEach(overlay => {
+      overlay.remove();
+    });
     
-    // Navigate directly to admin dashboard
-    loader.innerHTML = '✅ Access granted!';
-    setTimeout(() => {
-      navigate('/admin');
-    }, 300);
+    // Ensure body has no blocking classes
+    document.body.classList.remove('admin-accessing', 'content-layer', 'modal-open', 'overflow-hidden');
+    document.body.removeAttribute('aria-busy');
+    document.body.removeAttribute('aria-live');
+    
+    // Navigate immediately without delays
+    navigate('/admin');
     
   } catch (error) {
     console.error('Admin access error:', error);
     setAdminError('Failed to access admin dashboard. Please try again.');
-    loader.innerHTML = '❌ Access failed - <button onclick="this.parentElement.remove()">Close</button>';
   } finally {
-    // Clean up after navigation
-    setTimeout(() => {
-      if (loader && loader.parentNode) {
-        loader.remove();
-      }
-      setIsAdminLoading(false);
-    }, 1000);
+    // Reset loading state immediately
+    setIsAdminLoading(false);
   }
 }, [isAdminLoading, navigate]);
 // Force exit handler for emergency situations
 // Force exit handler for emergency situations
-  const handleForceExit = useCallback(() => {
+const handleForceExit = useCallback(() => {
     console.warn('🚨 Force exit triggered - Emergency admin access cleanup');
     
     // Set cleanup flag to prevent further operations
@@ -415,7 +390,7 @@ const handleAdminAccess = useCallback(async () => {
       });
     }
     
-    // Emergency cleanup
+    // Emergency cleanup - reset all state immediately
     if (isMountedRef.current) {
       setIsAdminLoading(false);
       setAdminLoadProgress(0);
@@ -424,20 +399,39 @@ const handleAdminAccess = useCallback(async () => {
       setRetryCount(0);
     }
     
-    // Force remove all admin-related classes and overlays
-    document.body.classList.remove('admin-accessing', 'content-layer');
-    document.body.classList.add('admin-emergency-exit');
+    // Aggressive cleanup of all potential blocking elements
+    const allOverlays = document.querySelectorAll(`
+      .overlay, .mask, .backdrop, .modal-backdrop, .loading-overlay,
+      [class*="overlay"], [class*="mask"], [class*="backdrop"],
+      .admin-mini-loader, .admin-loading-spinner
+    `);
+    allOverlays.forEach(element => {
+      element.remove();
+    });
+    
+    // Remove all problematic body classes
+    const classesToRemove = [
+      'admin-accessing', 'content-layer', 'modal-open', 'overflow-hidden',
+      'admin-emergency-exit', 'admin-route'
+    ];
+    classesToRemove.forEach(className => {
+      document.body.classList.remove(className);
+    });
+    
+    // Clear all body attributes that might cause issues
     document.body.removeAttribute('aria-busy');
     document.body.removeAttribute('aria-live');
+    document.body.removeAttribute('data-admin-loading');
     
-    // Remove emergency class after cleanup
-    setTimeout(() => {
-      document.body.classList.remove('admin-emergency-exit');
-      cleanupRef.current = false; // Reset for next attempt
-    }, 1000);
+    // Reset body styles
+    document.body.style.overflow = '';
+    document.body.style.pointerEvents = '';
+    
+    // Reset cleanup flag after immediate cleanup
+    cleanupRef.current = false;
     
     // Navigate to safe route
-navigate('/');
+    navigate('/');
 }, [navigate, adminError]);
 
   // Admin verification function
